@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp3"
         mc:Ignorable="d"
-        Title="MainWindow" Height="672" Width="1031">
+        Title="ArraySortVisualizer-win64" Height="672" Width="1031">
 	<Grid>
 		<StackPanel Orientation="Vertical">
 			<DockPanel Width="250">
