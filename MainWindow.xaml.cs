@@ -27,7 +27,7 @@ namespace WpfApp3
 		public MainWindow()
 		{
 			InitializeComponent();
-			this.AnimatedArr = new int[5].Select(x=> new Random().Next(1,101)).ToArray();
+			this.AnimatedArr = new int[20].Select(x=> new Random().Next(1,101)).ToArray();
 			MyAnim = new ArrayMovementAnimator(900, 300, AnimatedArr);
 			ArrayIMAGE.Source = MyAnim.CurrentFrameImage;
 			MyAnim.FrameUpdated += OnFrameUpdate;

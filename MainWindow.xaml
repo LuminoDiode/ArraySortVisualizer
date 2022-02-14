@@ -11,7 +11,7 @@
 			<DockPanel Width="250">
 				<Label HorizontalAlignment="Left">Размер массива</Label>
 				<DockPanel HorizontalAlignment="Right">
-					<Slider Minimum="5" Maximum="100" Width="100" HorizontalAlignment="Right" Name="ArraySizeSlider" PreviewMouseUp="ArraySizeSlider_ValueChanged"></Slider>
+					<Slider Value="20" Minimum="5" Maximum="100" Width="100" HorizontalAlignment="Right" Name="ArraySizeSlider" PreviewMouseUp="ArraySizeSlider_ValueChanged"></Slider>
 					<TextBox IsReadOnly="True" Width="50" HorizontalAlignment="Right" Name="ArraySizeTB"></TextBox>
 				</DockPanel>
 			</DockPanel>
