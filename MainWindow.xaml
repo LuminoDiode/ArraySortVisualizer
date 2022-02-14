@@ -7,6 +7,8 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
 	<Grid>
-		<Image Name="ArrayIMAGE"></Image>
+
+			<Image Name="ArrayIMAGE" Margin="36,20,36,81" ></Image>
+		    <Button Name="but1" Margin="627,383,57,23" Click="but1_Click">Button1</Button>
 	</Grid>
 </Window>
