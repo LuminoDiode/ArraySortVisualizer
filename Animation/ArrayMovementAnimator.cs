@@ -37,6 +37,7 @@ namespace WpfApp3
 
 
 		public Bitmap CurrentFrame;
+		public Graphics FrameGraphics;
 		public BitmapImage CurrentFrameImage => BitmapToImageSource(CurrentFrame);
 		public int FrameWidth { get; private set; }
 		public int FrameHeight { get; private set; }
@@ -52,12 +53,15 @@ namespace WpfApp3
 		{
 			this.FrameWidth = FrameWidth;
 			this.FrameHeight = FrameHeight;
-			this.AnimatedArray = AnimatedArray;
-			// (FrameWidth-(AnimatedArray.Length-1)*SpaceBetweenColumns) / AnimatedArray.Length  -- оставить место в размере 2 пикселей для пробелов между столбиками
-			this.ArrayElementsAsGraphicalObjects = ArrayToGraphicalObjects(this.AnimatedArray, (FrameWidth - (AnimatedArray.Length - 1) * SpaceBetweenColumns) / AnimatedArray.Length, FrameHeight);
 			this.CurrentFrame = new Bitmap(FrameWidth, FrameHeight);
+			this.FrameGraphics = Graphics.FromImage(this.CurrentFrame);
+
+			this.AnimatedArray = AnimatedArray;
+			
+			this.ArrayElementsAsGraphicalObjects = ArrayToGraphicalObjects(this.AnimatedArray, (FrameWidth - (AnimatedArray.Length - 1) * SpaceBetweenColumns) / AnimatedArray.Length, FrameHeight);
+			//this.CalcLocationsForObjects();
+
 			this.RenderCurrentFrame();
-			//this.CurrentFrameImage = BitmapToImageSource(CurrentFrame);
 		}
 
 		private GraphicalObject[] ArrayToGraphicalObjects(int[] Arr, int OneElementWidth, int MaxHeight)
@@ -72,6 +76,8 @@ namespace WpfApp3
 					 new Point(this.ElementWidth * i + SpaceBetweenColumns * i, MaxHeight - CurrElHeight),
 					 new Size(ElementWidth, CurrElHeight));
 				Out[i].SetColor(this.CommonElementBrush.Color);
+				Out[i].LeftUpperCornerLocation =
+					new Point(this.ElementWidth * i + SpaceBetweenColumns * i, this.FrameHeight - Out[i].Image.Height);
 			}
 
 			return Out;
@@ -79,45 +85,44 @@ namespace WpfApp3
 
 		private void CopyBitmapToAnother(Bitmap SourceBitmap, Bitmap DestinationBitmap, Point DestinationLeftUpperCorner)
 		{
-			for (int SourceX = 0; SourceX < SourceBitmap.Width && (SourceX + DestinationLeftUpperCorner.X) < DestinationBitmap.Width; SourceX++)
+			for (int SourceX = 0; SourceX < SourceBitmap.Width /* && (SourceX + DestinationLeftUpperCorner.X) < DestinationBitmap.Width*/; SourceX++)
 			{
-				for (int SourceY = 0; SourceY < SourceBitmap.Height && (SourceY + DestinationLeftUpperCorner.Y) < DestinationBitmap.Height; SourceY++)
+				for (int SourceY = 0; SourceY < SourceBitmap.Height /* && (SourceY + DestinationLeftUpperCorner.Y) < DestinationBitmap.Height*/; SourceY++)
 				{
 					var SetX = SourceX + DestinationLeftUpperCorner.X;
 					var SetY = SourceY + DestinationLeftUpperCorner.Y;
 					var SourcePixel = SourceBitmap.GetPixel(SourceX, SourceY);
-					DestinationBitmap.SetPixel(SetX, SetY, SourcePixel);
+					DestinationBitmap.SetPixel(SourceX + DestinationLeftUpperCorner.X, SourceY + DestinationLeftUpperCorner.Y, SourceBitmap.GetPixel(SourceX, SourceY));
 				}
 			}
 		}
 
 		public void RenderCurrentFrame()
 		{
-			var Gr = Graphics.FromImage(this.CurrentFrame);
-
 			var GOs = this.ArrayElementsAsGraphicalObjects;
 
-			Gr.FillRectangle(this.BackgroundBrush, 0, 0, this.CurrentFrame.Width, this.CurrentFrame.Height);
+			this.FrameGraphics.FillRectangle(this.BackgroundBrush, 0, 0, this.CurrentFrame.Width, this.CurrentFrame.Height);
 
 			var id = 0;
 			foreach (var GO in this.ArrayElementsAsGraphicalObjects.OrderBy(x => x.LayerId))
-				CopyBitmapToAnother(GO.Image, this.CurrentFrame, CalculateLeftUpperCornerLocationOfTheElement(id++));
+				CopyBitmapToAnother(GO.Image, this.CurrentFrame, GO.LeftUpperCornerLocation);
 		}
-
-		private Point CalculateLeftUpperCornerLocationOfTheElement(int ElementId)
-			=> new Point(this.ElementWidth * ElementId + SpaceBetweenColumns * ElementId, this.FrameHeight - this.ArrayElementsAsGraphicalObjects[ElementId].Image.Height);
 
 		public IEnumerator<Action> FillAnimationActions(GraphicalObject ArrayElement, Color TargetColor, int FramesNum)
 		{
+			double RedStart = ArrayElement.CurrentColor.R;
+			double GreenStart = ArrayElement.CurrentColor.G;
+			double BlueStart = ArrayElement.CurrentColor.B;
+
 			double RedStep = (TargetColor.R - ArrayElement.CurrentColor.R) / (double)(FramesNum);
 			double GreenStep = (TargetColor.G - ArrayElement.CurrentColor.G) / (double)(FramesNum);
 			double BlueStep = (TargetColor.B - ArrayElement.CurrentColor.B) / (double)(FramesNum);
 
-			for (int i = 0; i < FramesNum-1; i++)
+			for (int i = 0; i < FramesNum - 1; i++)
 			{
-				int CurrentRed = (int)(RedStep + ArrayElement.CurrentColor.R);
-				int CurrentGreen = (int)(GreenStep + ArrayElement.CurrentColor.G);
-				int CurrentBlue = (int)(BlueStep + ArrayElement.CurrentColor.B);
+				int CurrentRed = (int)(RedStep * i + RedStart);
+				int CurrentGreen = (int)(GreenStep * i + GreenStart);
+				int CurrentBlue = (int)(BlueStep * i + BlueStart);
 
 				if (CurrentRed < 0) CurrentRed = 0;
 				if (CurrentGreen < 0) CurrentGreen = 0;
@@ -153,18 +158,26 @@ namespace WpfApp3
 		{
 			GraphicalObject GO = this.ArrayElementsAsGraphicalObjects[ElementId];
 
-			double StepX = (GO.LeftUpperCornerLocation.X - DestionationPoint.X) / FramesNum;
-			double StepY = (GO.LeftUpperCornerLocation.Y - DestionationPoint.Y) / FramesNum;
+			double StartX = GO.LeftUpperCornerLocation.X;
+			double StartY = GO.LeftUpperCornerLocation.Y;
+
+			double StepX = (DestionationPoint.X-GO.LeftUpperCornerLocation.X) / FramesNum;
+			double StepY = (DestionationPoint.Y-GO.LeftUpperCornerLocation.Y) / FramesNum;
 
 			for (int i = 0; i < FramesNum; i++)
 			{
 				yield return new Action(() =>
 				{
-					GO.LeftUpperCornerLocation.X += (int)(StepX * i);
-					GO.LeftUpperCornerLocation.Y += (int)(StepY * i);
+					GO.LeftUpperCornerLocation.X = (int)(StartX + StepX * i);
+					GO.LeftUpperCornerLocation.Y = (int)(StartY + StepY * i);
 					FrameUpdated.Invoke(this, EventArgs.Empty);
 				});
 			}
+			yield return new Action(() =>
+			{
+				GO.LeftUpperCornerLocation = DestionationPoint;
+				FrameUpdated.Invoke(this, EventArgs.Empty);
+			});
 		}
 
 		/// <summary>
@@ -184,8 +197,8 @@ namespace WpfApp3
 			FirstGO.LayerId = 1;
 			SecondGO.LayerId = 1;
 
-			var FirstSelectActions = ToSelectedColorActions(FirstElementId);
-			var SecondSelectActions = ToSelectedColorActions(SecondElementId);
+			var FirstSelectActions = ToSelectedColorActions(FirstElementId, FramesNum);
+			var SecondSelectActions = ToSelectedColorActions(SecondElementId, FramesNum);
 
 			while (FirstSelectActions.MoveNext() && SecondSelectActions.MoveNext())
 			{
@@ -197,8 +210,8 @@ namespace WpfApp3
 			var FirstElementDestination = new Point(SecondGO.LeftUpperCornerLocation.X, FirstGO.LeftUpperCornerLocation.Y);
 			var SecondElementDestination = new Point(FirstGO.LeftUpperCornerLocation.X, SecondGO.LeftUpperCornerLocation.Y);
 
-			var FirstMoveActions = MoveAnimationActions(FirstElementId, FirstElementDestination);
-			var SecondMoveActions = MoveAnimationActions(SecondElementId, SecondElementDestination);
+			var FirstMoveActions = MoveAnimationActions(FirstElementId, FirstElementDestination, FramesNum);
+			var SecondMoveActions = MoveAnimationActions(SecondElementId, SecondElementDestination, FramesNum);
 
 			while (FirstMoveActions.MoveNext() && SecondMoveActions.MoveNext())
 			{
@@ -207,8 +220,8 @@ namespace WpfApp3
 				yield return new Action[] { CurrentFirst, CurrentSecond, UpdateInvoker };
 			}
 
-			var FirstUnselectActions = ToCommonColorActions(FirstElementId);
-			var SecondUnselectActions = ToCommonColorActions(SecondElementId);
+			var FirstUnselectActions = ToCommonColorActions(FirstElementId, FramesNum);
+			var SecondUnselectActions = ToCommonColorActions(SecondElementId, FramesNum);
 
 			while (FirstUnselectActions.MoveNext() && SecondUnselectActions.MoveNext())
 			{

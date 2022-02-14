@@ -31,48 +31,37 @@ namespace WpfApp3
 		}
 		private async void but1_Click(object sender, RoutedEventArgs e)
 		{
+			but1.IsEnabled = false;
 			await Task.Run(() =>
 			{
-				var Acts = MyAnim.ToSelectedColorActions(1,5);
-				Acts.MoveNext();
+				InvokeAll(MyAnim.ToSelectedColorActions(3,10));
 
+				InvokeAll(MyAnim.MoveAnimationActions(3, new System.Drawing.Point(0, 0), 10));
 
-				while (Acts.MoveNext())
-				{
-					Acts.Current.Invoke();
-				}
+				InvokeAll(MyAnim.ToCommonColorActions(3, 10));
 
+				InvokeAll(MyAnim.SwapAnimationActions(5, 7, 10));
 
-				Acts = MyAnim.ToSelectedColorActions(2, 5);
-				Acts.MoveNext();
-
-				while (Acts.MoveNext())
-				{
-					Acts.Current.Invoke();
-				}
-
-				Acts = MyAnim.ToCommonColorActions(1, 5);
-				Acts.MoveNext();
-
-				while (Acts.MoveNext())
-				{
-					Acts.Current.Invoke();
-				}
-				Acts = MyAnim.ToCommonColorActions(2, 5);
-				Acts.MoveNext();
-
-				while (Acts.MoveNext())
-				{
-					Acts.Current.Invoke();
-				}
 			});
+			but1.IsEnabled = true;
 		}
 
 		private void OnFrameUpdate(object sender, EventArgs e)
 		{
 			MyAnim.RenderCurrentFrame();
-			MyAnim.CurrentFrameImage.Freeze();
+			//MyAnim.CurrentFrameImage.Freeze();
 			Dispatcher.Invoke(new Action(()=> ArrayIMAGE.Source = MyAnim.CurrentFrameImage));
+		}
+		private void InvokeAll(IEnumerator<Action>Acts)
+		{
+			while(Acts.MoveNext())
+				Acts.Current.Invoke();
+		}
+		private void InvokeAll(IEnumerator<Action[]> Acts)
+		{
+			while (Acts.MoveNext())
+				foreach(var act in Acts.Current)
+					act.Invoke();
 		}
 	}
 }
