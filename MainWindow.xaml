@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp3"
         mc:Ignorable="d"
-        Title="ArraySortVisualizer-win64" Height="672" Width="1031">
+        Title="ArraySortVisualizer-win64" SizeToContent="WidthAndHeight">
 	<Grid>
 		<StackPanel Orientation="Vertical">
 			<DockPanel Width="250">
@@ -26,7 +26,7 @@
 			<Button Width="250" Name="GenerateArrayButton" Click="GenerateArrayButton_Click">Создать массив</Button>
 			<Button Width="250" Name="SortArrayButton" Click="SortArrayButton_Click">Начать сортировку</Button>
 			<!--<Button Width="250" Name="StopSortingButton" Click="StopSortingButton_Click">Остановить</Button>-->
-			<Image Name="ArrayIMAGE" Width="900" Height="300"></Image>
+			<Image Name="ArrayIMAGE" Width="900" Height="300" Margin="0,10,0,0"></Image>
 		</StackPanel>
 	</Grid>
 </Window>
