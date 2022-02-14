@@ -4,6 +4,16 @@ using System.Text;
 
 namespace WpfApp3
 {
+	class SwapAction
+	{
+		public int FirstIndex, SecondIndex;
+		public SwapAction(int FirstIndex, int SecondIndex)
+		{
+			this.FirstIndex = FirstIndex;
+			this.SecondIndex = SecondIndex;
+		}
+	}
+
 	internal class SortingActionsProvider
 	{
 
