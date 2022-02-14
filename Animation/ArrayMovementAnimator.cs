@@ -8,26 +8,28 @@ using System.IO;
 
 namespace WpfApp3
 {
-	class GraphicalObject
+
+	class ValueColumn
 	{
-		public Bitmap Image;
+
+		//public Bitmap Image;
 		public Point LeftUpperCornerLocation;
-		public Color CurrentColor => Image.GetPixel(0, 0);
+		public Color CurrentColor;
+		public Size Size;
 		public int LayerId;
-		private Graphics ImageGraphics;
-		private Rectangle FullSizeRect;
-		public GraphicalObject(Point Location, Size Size, int LayedId = 0)
+		public ValueColumn(Point Location, Size Size, int LayedId = 0)
 		{
 			this.LeftUpperCornerLocation = Location;
-			this.Image = new Bitmap(Size.Width, Size.Height);
+			this.Size = Size;
 			this.LayerId = LayedId;
-			this.ImageGraphics = Graphics.FromImage(this.Image);
-			this.FullSizeRect = new Rectangle(new Point(0, 0), Size);
 		}
-
 		public void SetColor(Color Color)
-			=> ImageGraphics.FillRectangle(new SolidBrush(Color), FullSizeRect);
+		{
+			this.CurrentColor = Color;
+		}
 	}
+
+
 	class ArrayMovementAnimator
 	{
 		const int DefaultNumOfFrames = 60;
@@ -35,18 +37,19 @@ namespace WpfApp3
 
 		public event EventHandler FrameUpdated;
 
-
-		public Bitmap CurrentFrame;
-		public Graphics FrameGraphics;
+		public Bitmap CurrentFrame { get; private set; }
 		public BitmapImage CurrentFrameImage => BitmapToImageSource(CurrentFrame);
 		public int FrameWidth { get; private set; }
 		public int FrameHeight { get; private set; }
 		public int[] AnimatedArray { get; private set; }
 		public SolidBrush CommonElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.LightBlue);
 		public SolidBrush SelectedElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.Blue);
+		public SolidBrush InactiveElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.DarkGray);
 		public SolidBrush BackgroundBrush { get; set; } = new SolidBrush(System.Drawing.Color.WhiteSmoke);
-		private GraphicalObject[] ArrayElementsAsGraphicalObjects;
-		private int ElementWidth => FrameWidth / AnimatedArray.Length - ((AnimatedArray.Length - 1) * SpaceBetweenColumns);
+
+		private Graphics FrameGraphics;
+		private ValueColumn[] ArrayElementsAsGraphicalObjects;
+		private int ElementWidth;
 
 
 		public ArrayMovementAnimator(int FrameWidth, int FrameHeight, int[] AnimatedArray)
@@ -58,43 +61,49 @@ namespace WpfApp3
 
 			this.AnimatedArray = AnimatedArray;
 
-			this.ArrayElementsAsGraphicalObjects = ArrayToGraphicalObjects(this.AnimatedArray, (FrameWidth - (AnimatedArray.Length - 1) * SpaceBetweenColumns) / AnimatedArray.Length, FrameHeight);
-			//this.CalcLocationsForObjects();
+			this.ElementWidth = (FrameWidth - (AnimatedArray.Length - 1) * SpaceBetweenColumns) / AnimatedArray.Length;
+
+			this.ArrayElementsAsGraphicalObjects =
+				ArrayToGraphicalObjects(this.AnimatedArray, ElementWidth, FrameHeight);
 
 			this.RenderCurrentFrame();
 		}
 
-		private GraphicalObject[] ArrayToGraphicalObjects(int[] Arr, int OneElementWidth, int MaxHeight)
+		private ValueColumn[] ArrayToGraphicalObjects(int[] Arr, int OneElementWidth, int MaxHeight)
 		{
-			GraphicalObject[] Out = new GraphicalObject[Arr.Length];
+			ValueColumn[] Out = new ValueColumn[Arr.Length];
 			int HeightCoeff = MaxHeight / Arr.Max();
 
 			for (int i = 0; i < Arr.Length; i++)
 			{
 				var CurrElHeight = Arr[i] * HeightCoeff;
-				Out[i] = new GraphicalObject(
+				Out[i] = new ValueColumn(
 					 new Point(this.ElementWidth * i + SpaceBetweenColumns * i, MaxHeight - CurrElHeight),
 					 new Size(ElementWidth, CurrElHeight));
-				Out[i].SetColor(this.CommonElementBrush.Color);
-				Out[i].LeftUpperCornerLocation =
-					new Point(this.ElementWidth * i + SpaceBetweenColumns * i, this.FrameHeight - Out[i].Image.Height);
+				Out[i].CurrentColor = this.CommonElementBrush.Color;
+
+				var LocationX = this.ElementWidth * i + SpaceBetweenColumns * i;
+				var LocationY = this.FrameHeight - CurrElHeight;
+				Out[i].LeftUpperCornerLocation = new Point(LocationX, LocationY);
 			}
 
 			return Out;
 		}
 
+
 		public void RenderCurrentFrame()
 		{
-			var GOs = this.ArrayElementsAsGraphicalObjects;
+			var GOs = this.ArrayElementsAsGraphicalObjects; // GraphicalObject == GO
 
 			this.FrameGraphics.FillRectangle(this.BackgroundBrush, 0, 0, this.CurrentFrame.Width, this.CurrentFrame.Height);
 
-			var id = 0;
 			foreach (var GO in this.ArrayElementsAsGraphicalObjects.OrderBy(x => x.LayerId))
-				this.FrameGraphics.FillRectangle(new SolidBrush(GO.CurrentColor), new Rectangle(GO.LeftUpperCornerLocation, GO.Image.Size));
+			{
+				this.FrameGraphics.FillRectangle(new SolidBrush(GO.CurrentColor), new Rectangle(GO.LeftUpperCornerLocation, GO.Size));
+			}
 		}
 
-		public IEnumerator<Action> FillAnimationActions(GraphicalObject ArrayElement, Color TargetColor, int FramesNum)
+		public IEnumerator<Action> FillAnimationActions(ValueColumn ArrayElement, Color TargetColor, int FramesNum)
 		{
 			float RedStart = ArrayElement.CurrentColor.R;
 			float GreenStart = ArrayElement.CurrentColor.G;
@@ -104,11 +113,14 @@ namespace WpfApp3
 			float GreenStep = (TargetColor.G - ArrayElement.CurrentColor.G) / (float)(FramesNum);
 			float BlueStep = (TargetColor.B - ArrayElement.CurrentColor.B) / (float)(FramesNum);
 
-			for (int i = 0; i < FramesNum - 1; i++)
+			int CurrentRed, CurrentGreen, CurrentBlue;
+
+			var stop = (FramesNum - 1);
+			for (int i = 0; i < stop; i++)
 			{
-				int CurrentRed = (int)(RedStep * i + RedStart);
-				int CurrentGreen = (int)(GreenStep * i + GreenStart);
-				int CurrentBlue = (int)(BlueStep * i + BlueStart);
+				CurrentRed = (int)(RedStep * i + RedStart);
+				CurrentGreen = (int)(GreenStep * i + GreenStart);
+				CurrentBlue = (int)(BlueStep * i + BlueStart);
 
 				if (CurrentRed < 0) CurrentRed = 0;
 				if (CurrentGreen < 0) CurrentGreen = 0;
@@ -126,6 +138,7 @@ namespace WpfApp3
 				FrameUpdated.Invoke(this, EventArgs.Empty);
 			});
 		}
+
 		/// <summary>
 		/// Возвращает делегаты Action, которые должны быть выполнены для выделения элемента.
 		/// </summary>
@@ -142,13 +155,13 @@ namespace WpfApp3
 		/// </summary>
 		public IEnumerator<Action> MoveAnimationActions(int ElementId, Point DestionationPoint, int FramesNum = DefaultNumOfFrames)
 		{
-			GraphicalObject GO = this.ArrayElementsAsGraphicalObjects[ElementId];
+			ValueColumn GO = this.ArrayElementsAsGraphicalObjects[ElementId];
 
 			float StartX = GO.LeftUpperCornerLocation.X;
 			float StartY = GO.LeftUpperCornerLocation.Y;
 
-			float StepX = (DestionationPoint.X - GO.LeftUpperCornerLocation.X) / FramesNum;
-			float StepY = (DestionationPoint.Y - GO.LeftUpperCornerLocation.Y) / FramesNum;
+			float StepX = (DestionationPoint.X - GO.LeftUpperCornerLocation.X) / (float)FramesNum;
+			float StepY = (DestionationPoint.Y - GO.LeftUpperCornerLocation.Y) / (float)FramesNum;
 
 			for (int i = 0; i < FramesNum; i++)
 			{
@@ -180,8 +193,11 @@ namespace WpfApp3
 			var FirstGO = this.ArrayElementsAsGraphicalObjects[FirstElementId];
 			var SecondGO = this.ArrayElementsAsGraphicalObjects[SecondElementId];
 
-			FirstGO.LayerId = 1;
-			SecondGO.LayerId = 1;
+			yield return new Action[] {new Action(() =>
+			{
+				FirstGO.LayerId = 1;
+				SecondGO.LayerId = 1;
+			}) };
 
 			var FirstSelectActions = ToSelectedColorActions(FirstElementId, FramesNum);
 			var SecondSelectActions = ToSelectedColorActions(SecondElementId, FramesNum);
@@ -216,19 +232,25 @@ namespace WpfApp3
 				yield return new Action[] { CurrentFirst, CurrentSecond, UpdateInvoker };
 			}
 
-			FirstGO.LayerId = 0;
-			SecondGO.LayerId = 0;
-
-			(FirstGO, SecondGO) = (SecondGO, FirstGO);
+			yield return new Action[] {new Action(() =>
+			{
+				FirstGO.LayerId = 0;
+				SecondGO.LayerId = 0;
+				SortingActionsProvider.Swap(this.ArrayElementsAsGraphicalObjects,FirstElementId,SecondElementId);
+			}) };
 		}
 
-		public void PerformSwapInSourceArrays(int i1, int i2)
+		public IEnumerator<Action[]> GetSortAnimationActions(IEnumerator<SwapAction> SwapActionsEnumerator,int FramesNum = DefaultNumOfFrames)
 		{
-			(AnimatedArray[i1], AnimatedArray[i2]) = (AnimatedArray[i2], AnimatedArray[i1]);
+			while (SwapActionsEnumerator.MoveNext())
+			{
+				var CurrentSwap = SwapAnimationActions(SwapActionsEnumerator.Current.FirstIndex, SwapActionsEnumerator.Current.SecondIndex,FramesNum);
+				while (CurrentSwap.MoveNext())
+				{
+					yield return CurrentSwap.Current;
+				}
+			}
 		}
-
-
-
 
 		// https://stackoverflow.com/a/22501616/11325184
 		private BitmapImage BitmapToImageSource(Bitmap bitmap)

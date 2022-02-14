@@ -22,10 +22,12 @@ namespace WpfApp3
 	public partial class MainWindow : Window
 	{
 		ArrayMovementAnimator MyAnim;
+		int[] AnimatedArr;
 		public MainWindow()
 		{
 			InitializeComponent();
-			MyAnim = new ArrayMovementAnimator(400, 300, new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+			this.AnimatedArr = new int[10].Select(x=> new Random().Next(1,101)).ToArray();
+			MyAnim = new ArrayMovementAnimator(400, 300, AnimatedArr);
 			ArrayIMAGE.Source = MyAnim.CurrentFrameImage;
 			MyAnim.FrameUpdated += OnFrameUpdate;
 		}
@@ -34,6 +36,7 @@ namespace WpfApp3
 			but1.IsEnabled = false;
 			await Task.Run(() =>
 			{
+				/*
 				InvokeAll(MyAnim.ToSelectedColorActions(3,30));
 
 				InvokeAll(MyAnim.MoveAnimationActions(3, new System.Drawing.Point(0, 0), 30));
@@ -41,7 +44,9 @@ namespace WpfApp3
 				InvokeAll(MyAnim.ToCommonColorActions(3, 30));
 
 				InvokeAll(MyAnim.SwapAnimationActions(5, 7, 30));
+				*/
 
+				InvokeAll(MyAnim.GetSortAnimationActions(SortingActionsProvider.SortByCombSort(AnimatedArr),10));
 			});
 			but1.IsEnabled = true;
 		}
@@ -54,14 +59,18 @@ namespace WpfApp3
 		}
 		private void InvokeAll(IEnumerator<Action>Acts)
 		{
-			while(Acts.MoveNext())
+			while (Acts.MoveNext())
+			{
 				Acts.Current.Invoke();
+			}
 		}
 		private void InvokeAll(IEnumerator<Action[]> Acts)
 		{
 			while (Acts.MoveNext())
-				foreach(var act in Acts.Current)
+				foreach (var act in Acts.Current)
+				{
 					act.Invoke();
+				}
 		}
 	}
 }
