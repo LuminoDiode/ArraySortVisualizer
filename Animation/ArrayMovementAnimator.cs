@@ -32,7 +32,7 @@ namespace WpfApp3
 
 	class ArrayMovementAnimator
 	{
-		const int DefaultNumOfFrames = 60;
+		public int FrameRate = 60;
 		const int SpaceBetweenColumns = 2;
 
 		public event EventHandler FrameUpdated;
@@ -142,28 +142,28 @@ namespace WpfApp3
 		/// <summary>
 		/// Возвращает делегаты Action, которые должны быть выполнены для выделения элемента.
 		/// </summary>
-		public IEnumerator<Action> ToSelectedColorActions(int ElementId, int FramesNum = DefaultNumOfFrames)
-			=> FillAnimationActions(ArrayElementsAsGraphicalObjects[ElementId], SelectedElementBrush.Color, FramesNum);
+		public IEnumerator<Action> ToSelectedColorActions(int ElementId, int? FramesNum = null)
+			=> FillAnimationActions(ArrayElementsAsGraphicalObjects[ElementId], SelectedElementBrush.Color, FramesNum?? this.FrameRate);
 		/// <summary>
 		/// Возвращает делегаты Action, которые должны быть выполнены для снятия выделения элемента.
 		/// </summary>
-		public IEnumerator<Action> ToCommonColorActions(int ElementId, int FramesNum = DefaultNumOfFrames)
-			=> FillAnimationActions(ArrayElementsAsGraphicalObjects[ElementId], CommonElementBrush.Color, FramesNum);
+		public IEnumerator<Action> ToCommonColorActions(int ElementId, int? FramesNum = null)
+			=> FillAnimationActions(ArrayElementsAsGraphicalObjects[ElementId], CommonElementBrush.Color, FramesNum ?? this.FrameRate);
 
 		/// <summary>
 		/// Возвращает делегаты Action, которые должны быть выполнены для перемещения объекта.
 		/// </summary>
-		public IEnumerator<Action> MoveAnimationActions(int ElementId, Point DestionationPoint, int FramesNum = DefaultNumOfFrames)
+		public IEnumerator<Action> MoveAnimationActions(int ElementId, Point DestionationPoint, int? FramesNum = null)
 		{
 			ValueColumn GO = this.ArrayElementsAsGraphicalObjects[ElementId];
 
 			float StartX = GO.LeftUpperCornerLocation.X;
 			float StartY = GO.LeftUpperCornerLocation.Y;
 
-			float StepX = (DestionationPoint.X - GO.LeftUpperCornerLocation.X) / (float)FramesNum;
-			float StepY = (DestionationPoint.Y - GO.LeftUpperCornerLocation.Y) / (float)FramesNum;
+			float StepX = (DestionationPoint.X - GO.LeftUpperCornerLocation.X) / (float)(FramesNum ?? this.FrameRate);
+			float StepY = (DestionationPoint.Y - GO.LeftUpperCornerLocation.Y) / (float)(FramesNum ?? this.FrameRate);
 
-			for (int i = 0; i < FramesNum; i++)
+			for (int i = 0; i < (FramesNum ?? this.FrameRate); i++)
 			{
 				yield return new Action(() =>
 				{
@@ -186,7 +186,7 @@ namespace WpfApp3
 		/// <param name="DestionationPoint"></param>
 		/// <param name="FramesNum"></param>
 		/// <returns></returns>
-		public IEnumerator<Action[]> SwapAnimationActions(int FirstElementId, int SecondElementId, int FramesNum = DefaultNumOfFrames)
+		public IEnumerator<Action[]> SwapAnimationActions(int FirstElementId, int SecondElementId, int? FramesNum = null)
 		{
 			var UpdateInvoker = new Action(() => FrameUpdated.Invoke(this, EventArgs.Empty));
 
@@ -240,7 +240,7 @@ namespace WpfApp3
 			}) };
 		}
 
-		public IEnumerator<Action[]> GetSortAnimationActions(IEnumerator<SwapAction> SwapActionsEnumerator,int FramesNum = DefaultNumOfFrames)
+		public IEnumerator<Action[]> GetSortAnimationActions(IEnumerator<SwapAction> SwapActionsEnumerator,int? FramesNum = null)
 		{
 			while (SwapActionsEnumerator.MoveNext())
 			{

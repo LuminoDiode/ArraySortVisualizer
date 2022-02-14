@@ -23,32 +23,18 @@ namespace WpfApp3
 	{
 		ArrayMovementAnimator MyAnim;
 		int[] AnimatedArr;
+		CancellationTokenSource CtSource = new CancellationTokenSource();
 		public MainWindow()
 		{
 			InitializeComponent();
-			this.AnimatedArr = new int[10].Select(x=> new Random().Next(1,101)).ToArray();
-			MyAnim = new ArrayMovementAnimator(400, 300, AnimatedArr);
+			this.AnimatedArr = new int[5].Select(x=> new Random().Next(1,101)).ToArray();
+			MyAnim = new ArrayMovementAnimator(900, 300, AnimatedArr);
 			ArrayIMAGE.Source = MyAnim.CurrentFrameImage;
 			MyAnim.FrameUpdated += OnFrameUpdate;
-		}
-		private async void but1_Click(object sender, RoutedEventArgs e)
-		{
-			but1.IsEnabled = false;
-			await Task.Run(() =>
-			{
-				/*
-				InvokeAll(MyAnim.ToSelectedColorActions(3,30));
+			MyAnim.FrameRate = (int)Math.Round(SpeedSlider.Value);
 
-				InvokeAll(MyAnim.MoveAnimationActions(3, new System.Drawing.Point(0, 0), 30));
-
-				InvokeAll(MyAnim.ToCommonColorActions(3, 30));
-
-				InvokeAll(MyAnim.SwapAnimationActions(5, 7, 30));
-				*/
-
-				InvokeAll(MyAnim.GetSortAnimationActions(SortingActionsProvider.SortByCombSort(AnimatedArr),10));
-			});
-			but1.IsEnabled = true;
+			this.ArraySizeTB.Text = Math.Round(this.ArraySizeSlider.Value).ToString();
+			this.SpeedTB.Text = Math.Round(this.SpeedSlider.Value).ToString();
 		}
 
 		private void OnFrameUpdate(object sender, EventArgs e)
@@ -71,6 +57,58 @@ namespace WpfApp3
 				{
 					act.Invoke();
 				}
+		}
+
+		private void ArraySizeSlider_ValueChanged(object sender, EventArgs e)
+		{
+			var sld = (Slider)sender;
+			this.ArraySizeTB.Text = Math.Round(sld.Value).ToString();
+		}
+
+		private void SpeedSlider_ValueChanged(object sender, EventArgs e)
+		{
+			var sld = (Slider)sender;
+			this.SpeedTB.Text = Math.Round(sld.Value).ToString();
+			this.MyAnim.FrameRate = (int)Math.Round(sld.Value);
+		}
+
+		private void GenerateArrayButton_Click(object sender, RoutedEventArgs e)
+		{
+			this.IsEnabled= false;
+			this.AnimatedArr = new int[(int)this.ArraySizeSlider.Value].Select(x => new Random().Next(1, 101)).ToArray();
+			this.MyAnim = new ArrayMovementAnimator(900, 300, this.AnimatedArr);
+			MyAnim.FrameRate = (int)Math.Round(SpeedSlider.Value);
+			MyAnim.FrameUpdated += OnFrameUpdate;
+			OnFrameUpdate(this, EventArgs.Empty);
+			this.IsEnabled = true;
+		}
+
+		private async void SortArrayButton_Click(object sender, RoutedEventArgs e)
+		{
+			CtSource.Cancel();
+			CtSource = new CancellationTokenSource();
+
+			var FR = (int)(this.SpeedSlider.Value * 3);
+
+			await Task.Run(() =>
+			{
+				Dispatcher.Invoke(() => ButtonsIsEnabled(false));
+				InvokeAll(MyAnim.GetSortAnimationActions(SortingActionsProvider.SortByCombSort(AnimatedArr), null));
+				Dispatcher.Invoke(() => ButtonsIsEnabled(true));
+			}, CtSource.Token);
+		}
+
+		private void ButtonsIsEnabled(bool enabled)
+		{
+			this.GenerateArrayButton.IsEnabled = enabled;
+			this.SortArrayButton.IsEnabled = enabled;
+			this.ArraySizeSlider.IsEnabled= enabled;
+		}
+
+		private void StopSortingButton_Click(object sender, RoutedEventArgs e)
+		{
+			this.CtSource.Cancel();
+			ButtonsIsEnabled(true);
 		}
 	}
 }

@@ -5,10 +5,28 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp3"
         mc:Ignorable="d"
-        Title="MainWindow" Height="500" Width="800">
+        Title="MainWindow" Height="672" Width="1031">
 	<Grid>
-
-			<Image Name="ArrayIMAGE" Margin="36,20,36,81" ></Image>
-		    <Button Name="but1" Margin="627,383,57,23" Click="but1_Click">Button1</Button>
+		<StackPanel Orientation="Vertical">
+			<DockPanel Width="250">
+				<Label HorizontalAlignment="Left">Размер массива</Label>
+				<DockPanel HorizontalAlignment="Right">
+					<Slider Minimum="5" Maximum="100" Width="100" HorizontalAlignment="Right" Name="ArraySizeSlider" PreviewMouseUp="ArraySizeSlider_ValueChanged"></Slider>
+					<TextBox IsReadOnly="True" Width="50" HorizontalAlignment="Right" Name="ArraySizeTB"></TextBox>
+				</DockPanel>
+			</DockPanel>
+			<DockPanel Width="250">
+				<Label HorizontalAlignment="Left">Замедление</Label>
+				<DockPanel HorizontalAlignment="Right">
+					<Slider Minimum="1" Maximum="60" Width="100" HorizontalAlignment="Right" Name="SpeedSlider" PreviewMouseUp="SpeedSlider_ValueChanged"></Slider>
+					<TextBox IsReadOnly="True" Width="50" HorizontalAlignment="Right" Name="SpeedTB"></TextBox>
+				</DockPanel>
+			</DockPanel>
+			<Label HorizontalAlignment="Center">(Скорость можно менять в процессе)</Label>
+			<Button Width="250" Name="GenerateArrayButton" Click="GenerateArrayButton_Click">Создать массив</Button>
+			<Button Width="250" Name="SortArrayButton" Click="SortArrayButton_Click">Начать сортировку</Button>
+			<!--<Button Width="250" Name="StopSortingButton" Click="StopSortingButton_Click">Остановить</Button>-->
+			<Image Name="ArrayIMAGE" Width="900" Height="300"></Image>
+		</StackPanel>
 	</Grid>
 </Window>
