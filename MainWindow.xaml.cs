@@ -34,13 +34,13 @@ namespace WpfApp3
 			but1.IsEnabled = false;
 			await Task.Run(() =>
 			{
-				InvokeAll(MyAnim.ToSelectedColorActions(3,10));
+				InvokeAll(MyAnim.ToSelectedColorActions(3,30));
 
-				InvokeAll(MyAnim.MoveAnimationActions(3, new System.Drawing.Point(0, 0), 10));
+				InvokeAll(MyAnim.MoveAnimationActions(3, new System.Drawing.Point(0, 0), 30));
 
-				InvokeAll(MyAnim.ToCommonColorActions(3, 10));
+				InvokeAll(MyAnim.ToCommonColorActions(3, 30));
 
-				InvokeAll(MyAnim.SwapAnimationActions(5, 7, 10));
+				InvokeAll(MyAnim.SwapAnimationActions(5, 7, 30));
 
 			});
 			but1.IsEnabled = true;

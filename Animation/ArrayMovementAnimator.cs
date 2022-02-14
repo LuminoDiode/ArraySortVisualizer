@@ -43,7 +43,7 @@ namespace WpfApp3
 		public int FrameHeight { get; private set; }
 		public int[] AnimatedArray { get; private set; }
 		public SolidBrush CommonElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.LightBlue);
-		public SolidBrush SelectedElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.DarkGreen);
+		public SolidBrush SelectedElementBrush { get; set; } = new SolidBrush(System.Drawing.Color.Blue);
 		public SolidBrush BackgroundBrush { get; set; } = new SolidBrush(System.Drawing.Color.WhiteSmoke);
 		private GraphicalObject[] ArrayElementsAsGraphicalObjects;
 		private int ElementWidth => FrameWidth / AnimatedArray.Length - ((AnimatedArray.Length - 1) * SpaceBetweenColumns);
@@ -57,7 +57,7 @@ namespace WpfApp3
 			this.FrameGraphics = Graphics.FromImage(this.CurrentFrame);
 
 			this.AnimatedArray = AnimatedArray;
-			
+
 			this.ArrayElementsAsGraphicalObjects = ArrayToGraphicalObjects(this.AnimatedArray, (FrameWidth - (AnimatedArray.Length - 1) * SpaceBetweenColumns) / AnimatedArray.Length, FrameHeight);
 			//this.CalcLocationsForObjects();
 
@@ -83,20 +83,6 @@ namespace WpfApp3
 			return Out;
 		}
 
-		private void CopyBitmapToAnother(Bitmap SourceBitmap, Bitmap DestinationBitmap, Point DestinationLeftUpperCorner)
-		{
-			for (int SourceX = 0; SourceX < SourceBitmap.Width /* && (SourceX + DestinationLeftUpperCorner.X) < DestinationBitmap.Width*/; SourceX++)
-			{
-				for (int SourceY = 0; SourceY < SourceBitmap.Height /* && (SourceY + DestinationLeftUpperCorner.Y) < DestinationBitmap.Height*/; SourceY++)
-				{
-					var SetX = SourceX + DestinationLeftUpperCorner.X;
-					var SetY = SourceY + DestinationLeftUpperCorner.Y;
-					var SourcePixel = SourceBitmap.GetPixel(SourceX, SourceY);
-					DestinationBitmap.SetPixel(SourceX + DestinationLeftUpperCorner.X, SourceY + DestinationLeftUpperCorner.Y, SourceBitmap.GetPixel(SourceX, SourceY));
-				}
-			}
-		}
-
 		public void RenderCurrentFrame()
 		{
 			var GOs = this.ArrayElementsAsGraphicalObjects;
@@ -105,18 +91,18 @@ namespace WpfApp3
 
 			var id = 0;
 			foreach (var GO in this.ArrayElementsAsGraphicalObjects.OrderBy(x => x.LayerId))
-				CopyBitmapToAnother(GO.Image, this.CurrentFrame, GO.LeftUpperCornerLocation);
+				this.FrameGraphics.FillRectangle(new SolidBrush(GO.CurrentColor), new Rectangle(GO.LeftUpperCornerLocation, GO.Image.Size));
 		}
 
 		public IEnumerator<Action> FillAnimationActions(GraphicalObject ArrayElement, Color TargetColor, int FramesNum)
 		{
-			double RedStart = ArrayElement.CurrentColor.R;
-			double GreenStart = ArrayElement.CurrentColor.G;
-			double BlueStart = ArrayElement.CurrentColor.B;
+			float RedStart = ArrayElement.CurrentColor.R;
+			float GreenStart = ArrayElement.CurrentColor.G;
+			float BlueStart = ArrayElement.CurrentColor.B;
 
-			double RedStep = (TargetColor.R - ArrayElement.CurrentColor.R) / (double)(FramesNum);
-			double GreenStep = (TargetColor.G - ArrayElement.CurrentColor.G) / (double)(FramesNum);
-			double BlueStep = (TargetColor.B - ArrayElement.CurrentColor.B) / (double)(FramesNum);
+			float RedStep = (TargetColor.R - ArrayElement.CurrentColor.R) / (float)(FramesNum);
+			float GreenStep = (TargetColor.G - ArrayElement.CurrentColor.G) / (float)(FramesNum);
+			float BlueStep = (TargetColor.B - ArrayElement.CurrentColor.B) / (float)(FramesNum);
 
 			for (int i = 0; i < FramesNum - 1; i++)
 			{
@@ -158,11 +144,11 @@ namespace WpfApp3
 		{
 			GraphicalObject GO = this.ArrayElementsAsGraphicalObjects[ElementId];
 
-			double StartX = GO.LeftUpperCornerLocation.X;
-			double StartY = GO.LeftUpperCornerLocation.Y;
+			float StartX = GO.LeftUpperCornerLocation.X;
+			float StartY = GO.LeftUpperCornerLocation.Y;
 
-			double StepX = (DestionationPoint.X-GO.LeftUpperCornerLocation.X) / FramesNum;
-			double StepY = (DestionationPoint.Y-GO.LeftUpperCornerLocation.Y) / FramesNum;
+			float StepX = (DestionationPoint.X - GO.LeftUpperCornerLocation.X) / FramesNum;
+			float StepY = (DestionationPoint.Y - GO.LeftUpperCornerLocation.Y) / FramesNum;
 
 			for (int i = 0; i < FramesNum; i++)
 			{
