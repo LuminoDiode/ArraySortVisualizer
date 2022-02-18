@@ -11,14 +11,14 @@
 			<DockPanel Width="250">
 				<Label HorizontalAlignment="Left">Размер массива</Label>
 				<DockPanel HorizontalAlignment="Right">
-					<Slider Value="20" Minimum="5" Maximum="100" Width="100" HorizontalAlignment="Right" Name="ArraySizeSlider" PreviewMouseUp="ArraySizeSlider_ValueChanged"></Slider>
+					<Slider Value="16" Minimum="5" Maximum="100" Width="100" HorizontalAlignment="Right" Name="ArraySizeSlider" PreviewMouseUp="ArraySizeSlider_ValueChanged"></Slider>
 					<TextBox IsReadOnly="True" Width="50" HorizontalAlignment="Right" Name="ArraySizeTB"></TextBox>
 				</DockPanel>
 			</DockPanel>
 			<DockPanel Width="250">
 				<Label HorizontalAlignment="Left">Замедление</Label>
 				<DockPanel HorizontalAlignment="Right">
-					<Slider Minimum="1" Maximum="60" Width="100" HorizontalAlignment="Right" Name="SpeedSlider" PreviewMouseUp="SpeedSlider_ValueChanged"></Slider>
+					<Slider Value="8" Minimum="1" Maximum="60" Width="100" HorizontalAlignment="Right" Name="SpeedSlider" PreviewMouseUp="SpeedSlider_ValueChanged"></Slider>
 					<TextBox IsReadOnly="True" Width="50" HorizontalAlignment="Right" Name="SpeedTB"></TextBox>
 				</DockPanel>
 			</DockPanel>
